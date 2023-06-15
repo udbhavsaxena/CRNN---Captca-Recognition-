@@ -26,38 +26,38 @@ class CaptchaModel(nn.Module):
 
     def forward(self,images, targets=None):
 
-        bs,c,h,w = images.size()
+        bs,c,h,w = images.size() # [1,3,75,300]
         # print(bs,c,h,w)
 
-        x = F.relu(self.conv_1(images))
+        x = F.relu(self.conv_1(images)) # [1,128,75,300]
         # print(x.size())
-        x = self.max_pool_1(x)
+        x = self.max_pool_1(x) # [1,128,37,150]
         # print(x.size())
-        x = F.relu(self.conv_2(x))
+        x = F.relu(self.conv_2(x))# [1,64,37,150]
         # print(x.size())
         x = self.max_pool_2(x) # [1,64,18,75] --> [bs, filters, height, widhth]
         x = x.permute(0,3,1,2) # position wise permutation -- > [1,75,64,18]
         # we are doing this because we want to have a look at the width of the img
         # why? because RNN needs it 
         # print(x.size())
-        x = x.view(bs,x.size(1), -1) # 
+        x = x.view(bs,x.size(1), -1) # [1,75, 64*18=1152]
         # print('After permutation and view fn:', x.size())
 
         # after adding the linear layer
-        x = self.linear_l(x)
+        x = self.linear_l(x) # [1,75,64]
         x = self.drop_1(x)
         # print('The size after linear and dropout:', x.size())
 
         # after adding the recurrent layer: GRU
-        x, _ = self.gru(x)
+        x, _ = self.gru(x) # [1,75,64]
         # print('The size after gru intro: ', x.size())
 
         # after adding linear at output
-        x = self.output(x)
+        x = self.output(x) #[1,75,20]
         # print('THe size after adding linear:', x.size()) 
 
         # final permutation
-        x = x.permute(1,0,2)
+        x = x.permute(1,0,2) # [75,1,20]
         # print('The final permutation:', x.size())
 
         if targets is not None:
